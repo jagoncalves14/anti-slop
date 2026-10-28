@@ -56,22 +56,20 @@ function isArrayAnnotation(type: ESTree.TSType): boolean {
   );
 }
 
-const ARRAY_FACTORIES: Readonly<Record<string, readonly string[]>> = {
-  Array: ["from", "of"],
-  Object: ["entries", "keys", "values"],
-};
+const ARRAY_FACTORIES: ReadonlyMap<string, readonly string[]> = new Map([
+  ["Array", ["from", "of"]],
+  ["Object", ["entries", "keys", "values"]],
+]);
 
-/** `Array.from`/`Array.of` and `Object.keys`/`values`/`entries` on the unshadowed globals always return arrays. */
+/** `Array.from`/`Array.of` and `Object.keys`/`values`/`entries` on the global (unbound or a configured global), not a local binding. */
 function isArrayFactoryCall(
   sourceCode: SourceCode,
   method: { readonly name: string; readonly object: ESTree.Node },
 ): boolean {
   const owner = unwrapArrayExpression(method.object);
-  return (
-    owner.type === "Identifier" &&
-    ARRAY_FACTORIES[owner.name]?.includes(method.name) === true &&
-    resolveArrayBinding(sourceCode, owner) === null
-  );
+  if (owner.type !== "Identifier" || ARRAY_FACTORIES.get(owner.name)?.includes(method.name) !== true) return false;
+  const binding = resolveArrayBinding(sourceCode, owner);
+  return binding === null || binding.defs.length === 0;
 }
 
 /** `value.split(",")` or `value.split(/,/)`: a literal separator is `String#split`, which returns an array. */

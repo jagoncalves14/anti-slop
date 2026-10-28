@@ -26,6 +26,8 @@ tester.run("anti-slop/no-array-filter-map", noArrayFilterMapRule, {
     "function collect(Object) { return Object.keys(users).filter(active).map(email); }",
     "function collect(value, separator) { return value.split(separator).filter(Boolean).map(email); }",
     "Object.groupBy(users, team).filter(active).map(email);",
+    "constructor.from(users).filter(active).map(email);",
+    "toString.keys(users).filter(active).map(email);",
   ],
   invalid: [
     { code: "[].filter(active).map(email);", errors: [error] },
@@ -50,5 +52,7 @@ tester.run("anti-slop/no-array-filter-map", noArrayFilterMapRule, {
     { code: "Object.entries(users).filter(active).map(email);", errors: [error] },
     { code: "const users = []; users.flat().filter(active).map(email);", errors: [error] },
     { code: "const users = []; users.sort().reverse().filter(active).map(email);", errors: [error] },
+    { code: "Array.from(users).filter(active).map(email);", languageOptions: { globals: { Array: "readonly" } }, errors: [error] },
+    { code: "Object.keys(users).map(email).filter(Boolean);", languageOptions: { globals: { Object: "readonly" } }, errors: [error] },
   ],
 });
